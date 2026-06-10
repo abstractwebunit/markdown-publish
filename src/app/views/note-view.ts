@@ -276,7 +276,9 @@ export class NoteView {
       return;
     }
     event.preventDefault();
-    this.router.navigateByUrl(href);
+    // hrefs are base-relative in the HTML (crawler-correct under subpaths);
+    // the router needs a root-relative URL, so normalize the leading slash.
+    this.router.navigateByUrl('/' + href.replace(/^\//, ''));
   }
 }
 

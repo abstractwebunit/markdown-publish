@@ -159,7 +159,12 @@ function wikilinkRule(md: MarkdownIt): void {
       let anchor = '';
       if (parts.heading) anchor = '#' + slugifyHeading(parts.heading);
       else if (parts.block) anchor = '#^' + parts.block;
-      const href = `/${res.slug}${anchor}`;
+      // Base-RELATIVE (no leading slash): every page carries <base href>, so
+      // the browser resolves this against the site base — a root-absolute
+      // "/slug" 404s for crawlers/middle-click on subpath deployments (e.g.
+      // GitHub Pages project sites). The SPA click handler is unaffected:
+      // the router treats "x/y" and "/x/y" identically.
+      const href = `${res.slug}${anchor}`;
       const token = state.push('html_inline', '', 0);
       token.content = `<a class="wikilink" href="${escapeAttr(href)}">${escapeHtml(label)}</a>`;
       if (!env.outgoing.some((l) => l.slug === res.slug)) {
@@ -322,7 +327,7 @@ export function createMarkdown(): MarkdownIt {
       const note = yt && !yt.hasTime ? env.resolveVideo(yt.id) : null;
       if (note && note.slug !== env.selfSlug) {
         // a link to a video we publish → route to its note instead of YouTube
-        token.attrs![hrefIdx][1] = `/${note.slug}`;
+        token.attrs![hrefIdx][1] = `${note.slug}`;
         token.attrSet('class', 'wikilink');
         if (!env.outgoing.some((l) => l.slug === note.slug)) {
           env.outgoing.push({ slug: note.slug, title: note.title });
@@ -348,7 +353,7 @@ export function createMarkdown(): MarkdownIt {
         .replace(/^\.\//, '');
       const res = target ? env.resolveLink(target) : { slug: null, title: '' };
       if (res.slug != null) {
-        token.attrs![hrefIdx][1] = `/${res.slug}${frag}`;
+        token.attrs![hrefIdx][1] = `${res.slug}${frag}`;
         token.attrSet('class', 'wikilink');
         if (!env.outgoing.some((l) => l.slug === res.slug)) {
           env.outgoing.push({ slug: res.slug, title: res.title });

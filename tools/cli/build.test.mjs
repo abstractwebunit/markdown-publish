@@ -34,5 +34,10 @@ test('builds the fixtures vault into a complete static site under a base href', 
   // GitHub Pages project site at user.github.io/sub doesn't 404).
   const rootHtml = readFileSync(join(out, 'index.html'), 'utf8');
   assert.match(rootHtml, /\/sub\//, 'root redirect/base did not honour --base-href');
+  // wikilink hrefs must be base-RELATIVE (no leading slash): root-absolute ones
+  // bypass <base href> and 404 for crawlers/middle-click on subpath sites.
+  const home = readFileSync(join(out, 'content', 'notes', 'home.json'), 'utf8');
+  assert.doesNotMatch(home, /class=\\"wikilink\\" href=\\"\//, 'root-absolute wikilink href found');
+  assert.match(home, /class=\\"wikilink\\" href=\\"[^/]/, 'no base-relative wikilink href found');
   rmSync(out, { recursive: true, force: true });
 }, { timeout: 180000 });
