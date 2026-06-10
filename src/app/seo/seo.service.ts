@@ -72,7 +72,12 @@ export class SeoService {
     this.setRobots(input.noindex === true);
     this.setCanonical(abs);
 
-    const ogImage = site.url ? `${site.url}/og-default.png` : '/og-default.png';
+    // og.png is generated at build time with the site name. Crawlers don't run
+    // JS, so an absolute URL (configured or provider-detected) is what makes
+    // link previews work everywhere; the baseURI fallback survives subpaths.
+    const ogImage = site.url
+      ? `${site.url}/og.png`
+      : new URL('og.png', this.doc.baseURI).href;
     const og: Record<string, string> = {
       'og:title': ogTitle,
       'og:description': desc,

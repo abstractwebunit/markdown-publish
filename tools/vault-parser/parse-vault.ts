@@ -47,6 +47,8 @@ export interface ParseOptions {
   siteLang?: string;
   /** Optional sidebar footer credit (no default — empty hides the footer). */
   siteFooter?: string;
+  /** Explicit home note (file name without extension); overrides detection. */
+  homeNote?: string;
 }
 
 interface NoteEntry {
@@ -444,7 +446,12 @@ export async function parseVault(opts: ParseOptions): Promise<void> {
   // else the first route.
   const homeHints = ['добро пожаловать', 'welcome', 'home', 'index', 'readme'];
   const isRoot = (n: NoteEntry) => !n.relPath.includes('/');
+  const explicitHome = opts.homeNote?.trim().toLowerCase();
   const homeNote =
+    (explicitHome
+      ? notes.find((n) => n.base.toLowerCase() === explicitHome) ??
+        notes.find((n) => n.slug === pathToSlug(opts.homeNote!.trim()))
+      : undefined) ??
     notes.find((n) => n.base.toLowerCase() === 'home') ??
     notes.find(
       (n) =>

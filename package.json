@@ -1,6 +1,6 @@
 {
   "name": "@abstractwebunit/markdown-publish",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Publish an Obsidian/Markdown vault as a fast static site — search, link graph, canvas boards. CLI + GitHub Action.",
   "license": "MIT",
   "repository": {
@@ -38,9 +38,10 @@
     "build:app": "ng build",
     "build:index": "pagefind --site dist/markdown-publish/browser",
     "build:seo": "node tools/gen-seo.mjs",
-    "build:site": "npm run build:content && npm run build:app && npm run build:index && npm run build:seo",
+    "build:site": "npm run build:content && npm run build:app && npm run build:index && npm run build:seo && npm run build:og",
     "serve:static": "node tools/static-serve.mjs",
-    "test:cli": "node --test \"tools/cli/**/*.test.mjs\""
+    "test:cli": "node --test \"tools/cli/**/*.test.mjs\"",
+    "build:og": "node tools/gen-og.mjs"
   },
   "packageManager": "npm@11.13.0",
   "engines": {
@@ -58,8 +59,10 @@
     "@angular/platform-server": "^22.0.0",
     "@angular/router": "^22.0.0",
     "@angular/ssr": "^22.0.0",
+    "@expo-google-fonts/inter": "^0.4.2",
     "@ng-draw-flow/core": "^1.1.0",
     "@ng-web-apis/resize-observer": "^5.3.0",
+    "@resvg/resvg-js": "^2.6.2",
     "@types/d3-force": "^3.0.10",
     "@types/express": "^5.0.1",
     "@types/node": "^20.17.19",

@@ -23,9 +23,13 @@ test('builds the fixtures vault into a complete static site under a base href', 
   });
   runBuild(cfg, { cwd: PKG_ROOT });
   for (const f of ['index.html', 'sitemap.xml', 'robots.txt', 'llms.txt', '404.html',
-                   'content/manifest.json', 'pagefind/pagefind.js']) {
+                   'content/manifest.json', 'pagefind/pagefind.js', 'og.png']) {
     assert.ok(existsSync(join(out, f)), `missing ${f}`);
   }
+  // the generated og card must be a real 1200x630 PNG (not the html fallback)
+  const png = readFileSync(join(out, 'og.png'));
+  assert.equal(png.readUInt32BE(16), 1200, 'og.png width');
+  assert.equal(png.readUInt32BE(20), 630, 'og.png height');
   // base-href must reach the output: the root redirect points under /sub/ (so a
   // GitHub Pages project site at user.github.io/sub doesn't 404).
   const rootHtml = readFileSync(join(out, 'index.html'), 'utf8');

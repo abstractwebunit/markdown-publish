@@ -81,6 +81,7 @@ export function runBuild(cfg, { cwd = process.cwd() } = {}) {
     SITE_LANG: cfg.siteLang,
     SITE_DESCRIPTION: cfg.siteDescription,
     SITE_FOOTER: cfg.siteFooter,
+    HOME_NOTE: cfg.home,
     PATH: `${join(PKG_ROOT, 'node_modules', '.bin')}${SEP}${process.env.PATH ?? ''}`,
   };
 
@@ -98,6 +99,7 @@ export function runBuild(cfg, { cwd = process.cwd() } = {}) {
   runNode(BIN.ng, ['build', '--base-href', baseHref], env); // → dist/markdown-publish/browser
   runNode(BIN.pagefind, ['--site', DIST_BROWSER], env); // search index
   runNode(join(PKG_ROOT, 'tools', 'gen-seo.mjs'), [], env); // robots/sitemap/llms/404
+  runNode(join(PKG_ROOT, 'tools', 'gen-og.mjs'), [], env); // og.png with the site name
 
   rmSync(outPath, { recursive: true, force: true });
   mkdirSync(outPath, { recursive: true });

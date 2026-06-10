@@ -12,6 +12,7 @@ parseVault({
   siteDescription: env['SITE_DESCRIPTION'],
   siteLang: env['SITE_LANG'],
   siteFooter: env['SITE_FOOTER'],
+  homeNote: env['HOME_NOTE'],
 }).then(
   () => {
     console.log('vault-parser done');

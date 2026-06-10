@@ -27,6 +27,25 @@ test('bare provider env vars are ignored (Netlify sets SITE_NAME itself)', () =>
   assert.equal(c.siteUrl, '');
 });
 
+test('siteUrl auto-detects from the hosting provider when not configured', () => {
+  const netlify = resolveConfig({ flags: {}, env: { NETLIFY: 'true', URL: 'https://my.netlify.app' }, cwd: '/nope' });
+  assert.equal(netlify.siteUrl, 'https://my.netlify.app');
+  const vercel = resolveConfig({ flags: {}, env: { VERCEL: '1', VERCEL_PROJECT_PRODUCTION_URL: 'my.vercel.app' }, cwd: '/nope' });
+  assert.equal(vercel.siteUrl, 'https://my.vercel.app');
+  const cf = resolveConfig({ flags: {}, env: { CF_PAGES: '1', CF_PAGES_URL: 'https://my.pages.dev' }, cwd: '/nope' });
+  assert.equal(cf.siteUrl, 'https://my.pages.dev');
+  // explicit config/flag wins over provider detection
+  const explicit = resolveConfig({ flags: { siteUrl: 'https://mine.example' }, env: { NETLIFY: 'true', URL: 'https://x.netlify.app' }, cwd: '/nope' });
+  assert.equal(explicit.siteUrl, 'https://mine.example');
+});
+
+test('home note override resolves via flag/env', () => {
+  const c = resolveConfig({ flags: { home: 'Старт' }, env: {}, cwd: '/nope' });
+  assert.equal(c.home, 'Старт');
+  const e = resolveConfig({ flags: {}, env: { MP_HOME: 'Welcome' }, cwd: '/nope' });
+  assert.equal(e.home, 'Welcome');
+});
+
 test('parseFlags maps every flag', () => {
   const f = parseFlags([
     '--vault', 'v', '--out', 'o', '--site-name', 'N',

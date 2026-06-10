@@ -11,6 +11,7 @@ export const DEFAULTS = {
   siteLang: 'en',
   siteDescription: '',
   siteFooter: '',
+  home: '',
 };
 
 const FLAG_TO_KEY = {
@@ -23,6 +24,7 @@ const FLAG_TO_KEY = {
   '--site-lang': 'siteLang',
   '--site-description': 'siteDescription',
   '--site-footer': 'siteFooter',
+  '--home': 'home',
 };
 // MP_-prefixed on purpose: hosting providers export their own generic vars
 // (Netlify sets SITE_NAME to the site's random name, which silently stomped
@@ -35,7 +37,20 @@ const ENV_TO_KEY = {
   MP_SITE_FOOTER: 'siteFooter',
   MP_BUILD_MODE: 'buildMode',
   MP_BASE_HREF: 'baseHref',
+  MP_HOME: 'home',
 };
+
+/** When the user didn't configure siteUrl, take it from the hosting provider's
+ *  own env — deliberately provider-scoped (never generic names): without an
+ *  absolute site URL the og:image/canonical in the static HTML are relative,
+ *  and most messengers/crawlers won't resolve those (broken link previews). */
+export function detectProviderUrl(env) {
+  if (env.NETLIFY && env.URL) return env.URL;
+  if (env.CF_PAGES && env.CF_PAGES_URL) return env.CF_PAGES_URL;
+  const vercelHost = env.VERCEL && (env.VERCEL_PROJECT_PRODUCTION_URL || env.VERCEL_URL);
+  if (vercelHost) return `https://${vercelHost}`;
+  return '';
+}
 
 /** Parse CLI args (after the `build` subcommand) into a partial config. */
 export function parseFlags(argv) {
@@ -66,11 +81,15 @@ export function resolveConfig({ flags = {}, env = {}, cwd = '.' } = {}) {
   for (const k of Object.keys(DEFAULTS)) {
     if (flags[k] != null) fromFlags[k] = flags[k];
   }
-  return {
+  const cfg = {
     ...DEFAULTS,
     ...file,
     ...fromEnv,
     ...fromFlags,
     vault: flags.vault ?? file.vault ?? null,
   };
+  if (!cfg.siteUrl) {
+    cfg.siteUrl = detectProviderUrl(env);
+  }
+  return cfg;
 }
