@@ -2,6 +2,12 @@
 
 **Docs & live demo:** https://abstractwebunit.github.io/markdown-publish-docs/ · **Starter template:** [markdown-publish-template](https://github.com/abstractwebunit/markdown-publish-template)
 
+![markdown-publish — published vault with search, link graph and notes](.github/media/home.png)
+
+| Interactive link graph | Canvas boards | Instant search |
+|---|---|---|
+| ![Graph](.github/media/graph.png) | ![Canvas](.github/media/canvas.png) | ![Search](.github/media/search.png) |
+
 A static-site generator that turns a folder of Markdown notes
 (plus `.canvas` boards and assets) into a fast, read-only, searchable website
 with a link graph. Built with Angular (zoneless SSG, prerendered) + a build-time
