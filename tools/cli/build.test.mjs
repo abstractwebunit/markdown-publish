@@ -1,0 +1,34 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { existsSync, rmSync, readFileSync } from 'node:fs';
+import { resolve, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { runBuild } from './run-build.mjs';
+import { resolveConfig } from './resolve-config.mjs';
+
+const PKG_ROOT = resolve(fileURLToPath(import.meta.url), '../../..');
+
+test('builds the fixtures vault into a complete static site under a base href', () => {
+  const out = resolve(PKG_ROOT, 'tmp-test-out');
+  rmSync(out, { recursive: true, force: true });
+  const cfg = resolveConfig({
+    flags: {
+      vault: join(PKG_ROOT, 'tools/fixtures/vault'),
+      out,
+      siteUrl: 'http://localhost/sub',
+      baseHref: '/sub/',
+    },
+    env: {},
+    cwd: PKG_ROOT,
+  });
+  runBuild(cfg, { cwd: PKG_ROOT });
+  for (const f of ['index.html', 'sitemap.xml', 'robots.txt', 'llms.txt', '404.html',
+                   'content/manifest.json', 'pagefind/pagefind.js']) {
+    assert.ok(existsSync(join(out, f)), `missing ${f}`);
+  }
+  // base-href must reach the output: the root redirect points under /sub/ (so a
+  // GitHub Pages project site at user.github.io/sub doesn't 404).
+  const rootHtml = readFileSync(join(out, 'index.html'), 'utf8');
+  assert.match(rootHtml, /\/sub\//, 'root redirect/base did not honour --base-href');
+  rmSync(out, { recursive: true, force: true });
+}, { timeout: 180000 });
