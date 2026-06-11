@@ -184,6 +184,8 @@ export class GraphCanvas {
   private hoverEdgeCount = 0;
 
   private sim?: Simulation<SimNode, SimLink>;
+  /** Budget for keeping the sim alive past alphaMin; reset by build()/drag. */
+  private holdTicks = 0;
   private nodes: SimNode[] = [];
   private links: SimLink[] = [];
   private large = false;
@@ -395,15 +397,17 @@ export class GraphCanvas {
         forceLink<SimNode, SimLink>(this.links)
           .id((d) => d.slug)
           .distance(large ? 30 : 52)
-          // Links touching well-connected notes pull harder, so hubs gather
-          // their neighbours into tight clusters.
+          // Attraction grows with the better-connected endpoint: a leaf linked
+          // to a hub is pulled in hard (clusters form around hubs), while links
+          // between two sparsely-connected notes stay loose. min() kept leaf-hub
+          // links weak — exactly the ones that must be tight.
           .strength((l) => {
-            const min = Math.min(
+            const max = Math.max(
               (l.source as SimNode).degree ?? 0,
               (l.target as SimNode).degree ?? 0,
             );
             const base = large ? 0.25 : 0.4;
-            return base * (1 + Math.min(1.2, min * 0.12));
+            return base * (0.4 + Math.min(2.6, max * 0.18));
           }),
       )
       .force(
@@ -413,7 +417,7 @@ export class GraphCanvas {
           // repel little (their many links win → attraction dominates → tight
           // clusters), while sparsely-linked notes repel hard (repulsion wins
           // → they push apart and drift to the edges).
-          .strength((d) => baseCharge * (0.55 + 0.95 * Math.exp(-d.degree / 2.5)))
+          .strength((d) => baseCharge * (0.4 + 1.2 * Math.exp(-(d.degree ?? 0) / 2)))
           .theta(0.9)
           .distanceMax(large ? 600 : Infinity),
       )
@@ -425,7 +429,7 @@ export class GraphCanvas {
       // snapping still); gentler alpha decay so the layout settles over a few
       // seconds rather than freezing at ~2s.
       .velocityDecay(large ? 0.6 : 0.55)
-      .alphaDecay(large ? 0.04 : 0.0228);
+      .alphaDecay(0.0228);
 
     // Collide on all graphs so nodes never stack into blobs when you zoom in.
     // Extra spacing on big graphs spreads them out, so fit shows small clean
@@ -435,7 +439,29 @@ export class GraphCanvas {
       forceCollide<SimNode>().radius((d) => this.radius(d) + (large ? 10 : 6)),
     );
 
+    // d3 kills the timer the moment alpha crosses alphaMin even if nodes are
+    // still mid-flight — on big graphs the layout froze visibly moving ("the
+    // graph dies"). While motion is still perceptible, top alpha back up — but
+    // with a hold that tapers to zero over HOLD_MAX ticks, so the energy (and
+    // the motion) always fades out smoothly instead of cutting off, and a
+    // pathological layout can't spin the CPU forever.
+    const HOLD_MAX = 1800;
+    const sample = Math.max(1, Math.floor(this.nodes.length / 256));
+    this.holdTicks = 0;
     sim.on('tick', () => {
+      if (sim.alpha() < 0.012 && sim.alphaTarget() === 0 && this.holdTicks < HOLD_MAX) {
+        let speed = 0;
+        let count = 0;
+        for (let i = 0; i < this.nodes.length; i += sample) {
+          const n = this.nodes[i];
+          speed += Math.hypot(n.vx ?? 0, n.vy ?? 0);
+          count++;
+        }
+        if (speed / count > 0.2) {
+          sim.alpha(0.012 * (1 - this.holdTicks / HOLD_MAX));
+          this.holdTicks++;
+        }
+      }
       this.uploadPositions();
       // Track the expanding layout with the camera until the user takes over —
       // no end-of-simulation snap (the old on('end') fit jerked the view).
@@ -968,7 +994,9 @@ export class GraphCanvas {
         this.dragNode.fy = null;
         // .restart() (symmetric with the pin path) guarantees the timer keeps
         // ticking so the released node + neighbours relax smoothly to rest,
-        // instead of freezing if the simulation had already cooled.
+        // instead of freezing if the simulation had already cooled. Fresh hold
+        // budget: the layout the drag disturbed gets time to live again.
+        this.holdTicks = 0;
         this.sim?.alphaTarget(0).restart();
         if (wasClick) {
           void this.router.navigateByUrl('/' + this.dragNode.slug);
