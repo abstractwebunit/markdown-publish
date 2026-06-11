@@ -389,7 +389,7 @@ export class GraphCanvas {
 
     const large = this.nodes.length > 400;
     this.large = large;
-    const baseCharge = large ? -110 : -320;
+    const baseCharge = large ? -180 : -320;
 
     const sim = forceSimulation(this.nodes)
       .force(
@@ -407,7 +407,7 @@ export class GraphCanvas {
               (l.target as SimNode).degree ?? 0,
             );
             const base = large ? 0.25 : 0.4;
-            return base * (0.4 + Math.min(2.6, max * 0.18));
+            return base * (0.4 + Math.min(2, max * 0.15));
           }),
       )
       .force(
@@ -419,7 +419,7 @@ export class GraphCanvas {
           // → they push apart and drift to the edges).
           .strength((d) => baseCharge * (0.4 + 1.2 * Math.exp(-(d.degree ?? 0) / 2)))
           .theta(0.9)
-          .distanceMax(large ? 600 : Infinity),
+          .distanceMax(large ? 1500 : Infinity),
       )
       // Soft pull toward the centre (NOT forceCenter, which hard-recenters the
       // whole graph every tick and makes dragging lurch the entire layout).
@@ -428,7 +428,7 @@ export class GraphCanvas {
       // Lower friction so nodes carry momentum and coast to rest (instead of
       // snapping still); gentler alpha decay so the layout settles over a few
       // seconds rather than freezing at ~2s.
-      .velocityDecay(large ? 0.6 : 0.55)
+      .velocityDecay(large ? 0.65 : 0.55)
       .alphaDecay(0.0228);
 
     // Collide on all graphs so nodes never stack into blobs when you zoom in.
@@ -449,7 +449,7 @@ export class GraphCanvas {
     const sample = Math.max(1, Math.floor(this.nodes.length / 256));
     this.holdTicks = 0;
     sim.on('tick', () => {
-      if (sim.alpha() < 0.012 && sim.alphaTarget() === 0 && this.holdTicks < HOLD_MAX) {
+      if (sim.alpha() < 0.008 && sim.alphaTarget() === 0 && this.holdTicks < HOLD_MAX) {
         let speed = 0;
         let count = 0;
         for (let i = 0; i < this.nodes.length; i += sample) {
@@ -458,7 +458,7 @@ export class GraphCanvas {
           count++;
         }
         if (speed / count > 0.2) {
-          sim.alpha(0.012 * (1 - this.holdTicks / HOLD_MAX));
+          sim.alpha(0.008 * (1 - this.holdTicks / HOLD_MAX));
           this.holdTicks++;
         }
       }
@@ -623,7 +623,7 @@ export class GraphCanvas {
     const w = maxX - minX || 1;
     const h = maxY - minY || 1;
     this.k = Math.max(
-      0.15,
+      0.05,
       Math.min(
         this.maxZoom(),
         Math.min((this.cssWidth - pad) / w, (this.cssHeight - pad) / h),
