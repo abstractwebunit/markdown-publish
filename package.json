@@ -1,6 +1,6 @@
 {
   "name": "@abstractwebunit/markdown-publish",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Publish an Obsidian/Markdown vault as a fast static site — search, link graph, canvas boards. CLI + GitHub Action.",
   "license": "MIT",
   "repository": {
