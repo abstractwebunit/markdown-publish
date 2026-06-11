@@ -10,6 +10,11 @@
 </p>
 
 <p align="center">
+  <sub>A free, open-source <b>alternative to Obsidian Publish</b>: your notes stay in your repo,<br>
+  the site is hosted on your own account (GitHub Pages / Netlify / Vercel / Cloudflare) — $0/month.</sub>
+</p>
+
+<p align="center">
   <a href="https://www.npmjs.com/package/@abstractwebunit/markdown-publish"><img src="https://img.shields.io/npm/v/%40abstractwebunit%2Fmarkdown-publish?color=8a5cf5&label=npm" alt="npm version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"></a>
   <a href="https://abstractwebunit.github.io/markdown-publish-docs/"><img src="https://img.shields.io/badge/docs-6%20languages-8a5cf5" alt="Docs in 6 languages"></a>

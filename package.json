@@ -88,5 +88,21 @@
   "devDependencies": {
     "prettier": "^3.8.1",
     "vitest": "^4.0.8"
-  }
+  },
+  "keywords": [
+    "obsidian",
+    "obsidian-publish",
+    "obsidian-publish-alternative",
+    "static-site-generator",
+    "markdown",
+    "digital-garden",
+    "knowledge-base",
+    "second-brain",
+    "notes",
+    "wiki",
+    "publish",
+    "pagefind",
+    "github-pages",
+    "json-canvas"
+  ]
 }
