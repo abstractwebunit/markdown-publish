@@ -387,6 +387,7 @@ export class GraphCanvas {
 
     const large = this.nodes.length > 400;
     this.large = large;
+    const baseCharge = large ? -110 : -320;
 
     const sim = forceSimulation(this.nodes)
       .force(
@@ -394,14 +395,25 @@ export class GraphCanvas {
         forceLink<SimNode, SimLink>(this.links)
           .id((d) => d.slug)
           .distance(large ? 30 : 52)
-          .strength(large ? 0.25 : 0.4),
+          // Links touching well-connected notes pull harder, so hubs gather
+          // their neighbours into tight clusters.
+          .strength((l) => {
+            const min = Math.min(
+              (l.source as SimNode).degree ?? 0,
+              (l.target as SimNode).degree ?? 0,
+            );
+            const base = large ? 0.25 : 0.4;
+            return base * (1 + Math.min(1.2, min * 0.12));
+          }),
       )
       .force(
         'charge',
         forceManyBody<SimNode>()
-          // Stronger repulsion than the link attraction → nodes push apart
-          // (spread out) more than they pull together.
-          .strength(large ? -110 : -320)
+          // Repulsion scales with how connected a note is: well-linked hubs
+          // repel little (their many links win → attraction dominates → tight
+          // clusters), while sparsely-linked notes repel hard (repulsion wins
+          // → they push apart and drift to the edges).
+          .strength((d) => baseCharge * (0.55 + 0.95 * Math.exp(-d.degree / 2.5)))
           .theta(0.9)
           .distanceMax(large ? 600 : Infinity),
       )
@@ -409,8 +421,11 @@ export class GraphCanvas {
       // whole graph every tick and makes dragging lurch the entire layout).
       .force('x', forceX<SimNode>(0).strength((d) => (d.degree === 0 ? 0.22 : 0.06)))
       .force('y', forceY<SimNode>(0).strength((d) => (d.degree === 0 ? 0.22 : 0.06)))
-      .velocityDecay(large ? 0.75 : 0.55)
-      .alphaDecay(large ? 0.06 : 0.0228);
+      // Lower friction so nodes carry momentum and coast to rest (instead of
+      // snapping still); gentler alpha decay so the layout settles over a few
+      // seconds rather than freezing at ~2s.
+      .velocityDecay(large ? 0.6 : 0.55)
+      .alphaDecay(large ? 0.04 : 0.0228);
 
     // Collide on all graphs so nodes never stack into blobs when you zoom in.
     // Extra spacing on big graphs spreads them out, so fit shows small clean
@@ -951,7 +966,10 @@ export class GraphCanvas {
       if (this.dragNode) {
         this.dragNode.fx = null;
         this.dragNode.fy = null;
-        this.sim?.alphaTarget(0);
+        // .restart() (symmetric with the pin path) guarantees the timer keeps
+        // ticking so the released node + neighbours relax smoothly to rest,
+        // instead of freezing if the simulation had already cooled.
+        this.sim?.alphaTarget(0).restart();
         if (wasClick) {
           void this.router.navigateByUrl('/' + this.dragNode.slug);
         }
