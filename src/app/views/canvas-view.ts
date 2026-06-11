@@ -22,6 +22,18 @@ const FIT_PADDING = 0.9;
 
 /** Stable reference so the effect's repeated addEventListener dedupes. */
 const preventNativeDrag = (event: Event): void => event.preventDefault();
+
+/** ng-draw-flow starts a node drag on pointerdown from ANY mouse button, so a
+ *  middle-click "picked up" the note. This runs in the capture phase on the
+ *  board root — before the library's node-level listener — and kills the event
+ *  for non-primary buttons over a node. The background is untouched, so pan
+ *  behaves as before. */
+const onlyPrimaryNodeDrag = (event: Event): void => {
+  const e = event as PointerEvent;
+  if (e.button !== 0 && (e.target as Element).closest('[data-draw-flow-node]')) {
+    e.stopPropagation();
+  }
+};
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 3;
 
@@ -197,6 +209,7 @@ export class CanvasView {
           // node (anchors, favicons, content images) in one place.
           // (addEventListener dedupes the same fn, so re-runs are safe.)
           el.addEventListener('dragstart', preventNativeDrag);
+          el.addEventListener('pointerdown', onlyPrimaryNodeDrag, true);
         }
       });
 
