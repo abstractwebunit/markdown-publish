@@ -71,9 +71,16 @@ export function runBuild(cfg, { cwd = process.cwd() } = {}) {
   }
   const outPath = resolve(cwd, cfg.out);
 
+  // Base href must start and end with '/'. For a GitHub Pages project site this
+  // is "/<repo>/"; for a user/root site or custom domain it stays "/".
+  let baseHref = String(cfg.baseHref ?? '/').trim() || '/';
+  if (!baseHref.startsWith('/')) baseHref = '/' + baseHref;
+  if (!baseHref.endsWith('/')) baseHref += '/';
+
   const env = {
     ...process.env,
     VAULT: vaultPath,
+    BASE_HREF: baseHref,
     CONTENT_OUT: join(PKG_ROOT, 'src', 'content'),
     BUILD_MODE: cfg.buildMode,
     SITE_NAME: cfg.siteName,
@@ -84,12 +91,6 @@ export function runBuild(cfg, { cwd = process.cwd() } = {}) {
     HOME_NOTE: cfg.home,
     PATH: `${join(PKG_ROOT, 'node_modules', '.bin')}${SEP}${process.env.PATH ?? ''}`,
   };
-
-  // Base href must start and end with '/'. For a GitHub Pages project site this
-  // is "/<repo>/"; for a user/root site or custom domain it stays "/".
-  let baseHref = String(cfg.baseHref ?? '/').trim() || '/';
-  if (!baseHref.startsWith('/')) baseHref = '/' + baseHref;
-  if (!baseHref.endsWith('/')) baseHref += '/';
 
   // Clean disposable per-invocation outputs.
   rmSync(join(PKG_ROOT, 'src', 'content'), { recursive: true, force: true });

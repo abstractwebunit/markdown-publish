@@ -10,7 +10,12 @@ const siteUrl = (process.env.SITE_URL ?? 'http://localhost:4301').replace(/\/+$/
 const { routes } = JSON.parse(
   readFileSync(path.join(distDir, 'prerendered-routes.json'), 'utf8'),
 );
-const routePaths = Object.keys(routes);
+// Prerendered route paths include the base href (e.g. /repo/note) while
+// siteUrl already ends with the same path — strip it or every URL doubles.
+const basePath = (process.env.BASE_HREF ?? '/').replace(/\/+$/, '');
+const routePaths = Object.keys(routes).map((r) =>
+  basePath && r.startsWith(basePath) ? r.slice(basePath.length) || '/' : r,
+);
 const urls = routePaths.map((r) => `${siteUrl}${encodeURI(r)}`);
 
 // --- sitemap.xml ---

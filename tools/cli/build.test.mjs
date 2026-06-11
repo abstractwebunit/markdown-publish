@@ -34,6 +34,11 @@ test('builds the fixtures vault into a complete static site under a base href', 
   // GitHub Pages project site at user.github.io/sub doesn't 404).
   const rootHtml = readFileSync(join(out, 'index.html'), 'utf8');
   assert.match(rootHtml, /\/sub\//, 'root redirect/base did not honour --base-href');
+  // sitemap urls must not double the base path (siteUrl already ends with /sub;
+  // prerendered route paths also start with /sub — gen-seo strips it).
+  const sitemap = readFileSync(join(out, 'sitemap.xml'), 'utf8');
+  assert.doesNotMatch(sitemap, /\/sub\/sub\//, 'sitemap doubled the base path');
+  assert.match(sitemap, /<loc>http:\/\/localhost\/sub\/<\/loc>|<loc>http:\/\/localhost\/sub<\/loc>/, 'sitemap missing root url');
   // wikilink hrefs must be base-RELATIVE (no leading slash): root-absolute ones
   // bypass <base href> and 404 for crawlers/middle-click on subpath sites.
   const home = readFileSync(join(out, 'content', 'notes', 'home.json'), 'utf8');
